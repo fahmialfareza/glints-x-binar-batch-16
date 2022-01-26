@@ -1,6 +1,9 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
+// Import user model
+const { User } = require('../models');
+
 passport.use(
   'google',
   new GoogleStrategy(
@@ -10,13 +13,15 @@ passport.use(
       clientSecret: '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',
       callbackURL: 'http://localhost:5000/auth/google/callback',
     },
-    function (accessToken, refreshToken, profile, cb) {
-      // User.findOrCreate({ googleId: profile.id }, function (err, user) {
-      //   return cb(err, user);
-      // });
-      console.log('profile: ', profile);
-      console.log('accessToken: ', accessToken);
-      console.log('refreshToken: ', refreshToken);
+    async function (accessToken, refreshToken, profile, cb) {
+      // Find email or create it
+      const [findUser, created] = await User.findOrCreate({
+        where: { email: profile.emails[0].value },
+        defaults: { name: profile.displayName },
+      });
+
+      // null is no error, findUser => req.user
+      cb(null, findUser);
     }
   )
 );

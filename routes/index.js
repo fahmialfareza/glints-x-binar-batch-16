@@ -8,18 +8,32 @@ const UserRoute = require('./UserRoute');
 /* Import passport helper */
 require('../helpers/passport');
 
+const { generateToken } = require('../helpers/jwt');
+
 /* OAuth Google */
 router.get(
   '/auth/google',
-  passport.authenticate('google', { scope: ['profile'] })
+  passport.authenticate('google', {
+    scope: ['email', 'profile'],
+    session: false,
+  })
 );
 
 router.get(
   '/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
+  passport.authenticate('google', {
+    failureRedirect: '/login',
+    session: false,
+  }),
   function (req, res) {
-    // Successful authentication, redirect home.
-    res.redirect('/');
+    // Successful authentication
+    let payload = {
+      id: req.user.id,
+      email: req.user.email,
+    };
+
+    const access_token = generateToken(payload);
+    res.status(200).json({ access_token });
   }
 );
 
